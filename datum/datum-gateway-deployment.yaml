@@ -1,0 +1,43 @@
+# Manifest based on https://github.com/Retropex/datum-docker image
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: datum-gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: datum-gateway
+  template:
+    metadata:
+      labels:
+        app: datum-gateway
+    spec:
+      containers:
+      - name: datum-gateway
+        image: retropex/datum-gateway:latest
+        ports:
+          - containerPort: 7152  # DATUM API
+          - containerPort: 23334 # Stratum
+        volumeMounts:
+          - name: config
+            mountPath: /app/config
+      volumes:
+        - name: config
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datum-gateway
+spec:
+  selector:
+    app: datum-gateway
+  ports:
+    - name: datum-api
+      port: 7152
+      targetPort: 7152
+    - name: stratum
+      port: 23334
+      targetPort: 23334
+  type: ClusterIP
