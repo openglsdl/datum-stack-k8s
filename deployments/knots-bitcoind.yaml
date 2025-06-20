@@ -1,0 +1,138 @@
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: knots-bitcoind
+spec:
+  serviceName: knots-bitcoind-cluster
+  replicas: 2
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: knots-bitcoind
+  template:
+    metadata:
+      labels:
+        app: knots-bitcoind
+    spec:
+      securityContext:
+        fsGroup: 1000
+      initContainers:
+      - name: copy-config
+        image: alpine:3.22.0
+        command: 
+          - sh
+          - -c
+          - |
+            cp /config/bitcoin.conf /data/.bitcoin/bitcoin.conf
+            # Ensure proper ownership of all files for knots
+            chown -R 1000:1000 /data/.bitcoin
+            chmod 755 /data/.bitcoin
+        volumeMounts:
+          - name: bitcoind-data
+            mountPath: /data/.bitcoin
+          - name: config
+            mountPath: /config
+        securityContext:
+          runAsUser: 0
+      containers:
+        - name: knots-bitcoind
+          # IMPORTANT: 
+          #   1. Uncomment the image line below and set the image to your desired image.
+          #   2. Uncomment and customize resources requests and limits as per your environment.
+          #image: localhost:32000/retropex/docker-bitcoind:28.1
+          #resources:
+          #  requests:
+          #    memory: "8G"
+          #    cpu: "2000m"
+          #  limits:
+          #    memory: "8G"
+          #    cpu: "2000m"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          args:
+            - "-zmqpubrawblock=tcp://0.0.0.0:28332"
+            - "-zmqpubrawtx=tcp://0.0.0.0:28333"
+          ports:
+            - containerPort: 8080   # REST
+            - containerPort: 8333   # P2P mainnet
+            - containerPort: 18333  # P2P testnet
+            - containerPort: 18444  # P2P regnet
+            - containerPort: 8332   # RPC mainnet
+            - containerPort: 18332  # RPC testnet
+            - containerPort: 18443  # RPC regnet
+            - containerPort: 28332  # ZMQ tx
+            - containerPort: 28333  # ZMQ blocks
+          volumeMounts:
+            - name: bitcoind-data
+              mountPath: /data/.bitcoin
+          readinessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - "bitcoind getblockchaininfo"
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -c
+              - "bitcoind getblockchaininfo"
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            failureThreshold: 3
+      volumes:
+        - name: config
+          configMap:
+            name: bitcoin.conf
+  volumeClaimTemplates:
+  - metadata:
+      name: bitcoind-data
+    spec:
+      storageClassName: mayastor
+      accessModes: 
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 850Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: knots-bitcoind-lb
+spec:
+  selector:
+    app: knots-bitcoind
+  ports:
+    - name: rest
+      port: 8080
+      targetPort: 8080
+    - name: p2p-mainnet
+      port: 8333
+      targetPort: 8333
+    - name: p2p-testnet
+      port: 18333
+      targetPort: 18333
+    - name: p2p-regnet
+      port: 18444
+      targetPort: 18444
+    - name: rpc-mainnet
+      port: 8332
+      targetPort: 8332
+    - name: rpc-testnet
+      port: 18332
+      targetPort: 18332
+    - name: rpc-regnet
+      port: 18443
+      targetPort: 18443
+    - name: zmq-tx
+      port: 28332
+      targetPort: 28332
+    - name: zmq-blocks
+      port: 28333
+      targetPort: 28333
+  type: ClusterIP
