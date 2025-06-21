@@ -1,0 +1,8 @@
+resources:
+  - ../../base
+
+patches:
+- target:
+    kind: StatefulSet
+    name: datum-gateway
+  path: patch.yaml

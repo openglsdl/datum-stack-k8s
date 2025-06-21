@@ -1,0 +1,2 @@
+deploy/datum/**/datum_gateway_config.json
+deploy/knots/**/bitcoin.conf

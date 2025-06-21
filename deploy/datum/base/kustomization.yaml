@@ -1,0 +1,7 @@
+resources:
+  - datum-gateway.yaml
+
+configMapGenerator:
+  - name: datum-config
+    files:
+      - "datum_gateway_config.json"

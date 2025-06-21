@@ -1,0 +1,36 @@
+{
+  "bitcoind": {
+    "rpcurl": "",
+    "rpcuser": "",
+    "rpcpassword": "",
+    "work_update_seconds": 40
+  },
+  "stratum": {
+    "listen_addr": "0.0.0.0",
+    "listen_port": 23334,
+    "max_clients_per_thread": 2000,
+    "max_threads": 10,
+    "max_clients": 20000,
+    "vardiff_min": 16384
+  },
+  "mining": {
+    "pool_address": "",
+    "coinbase_tag_primary": "DATUM",
+    "coinbase_tag_secondary": ""
+  },
+  "api": {
+    "listen_port": 7152
+  },
+  "logger": {
+    "log_to_file": true,
+    "log_file": "/app/datum_gateway.log",
+    "log_level_file": 2
+  },
+  "datum": {
+    "pool_host": "datum-beta1.mine.ocean.xyz",
+    "pool_port": 28915,
+    "pool_pass_workers": true,
+    "pool_pass_full_users": true,
+    "pooled_mining_only": true
+  }
+}

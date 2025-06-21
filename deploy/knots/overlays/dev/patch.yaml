@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: knots-bitcoind
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: knots-bitcoind
+          image: localhost:32000/retropex/docker-bitcoind:28.1
+          command: ["/bin/sh"]
+          args: ["-c", "sleep 3600"]
+  volumeClaimTemplates:
+  - metadata:
+      name: bitcoind-data
+    spec:
+      storageClassName: mayastor
+      accessModes: 
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 750Gi

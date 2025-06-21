@@ -1,0 +1,88 @@
+
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: datum-gateway
+spec:
+  serviceName: datum-gateway-cluster
+  replicas: 1
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: datum-gateway
+  template:
+    metadata:
+      labels:
+        app: datum-gateway
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: datum-gateway
+          image: DEFAULT_IMAGE_PLACEHOLDER  # Create a kustomization to replace this with your image
+          resources:
+            requests:
+              memory: "4G"
+              cpu: "2000m"
+            limits:
+              memory: "4G"
+              cpu: "2000m"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          ports:
+            - containerPort: 7152   # API
+            - containerPort: 23334   # Sv1
+          volumeMounts:
+            - name: datum-data
+              mountPath: /app
+            - name: datum-config-volume
+              mountPath: /app/datum_gateway_config.json
+              subPath: datum_gateway_config.json
+          readinessProbe:
+            tcpSocket:
+              port: 23334
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 30
+            failureThreshold: 3
+          livenessProbe:
+            tcpSocket:
+              port: 23334
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 30
+            failureThreshold: 3
+      volumes:
+        - name: datum-config-volume
+          configMap:
+            name: datum-config
+            items:
+              - key: datum_gateway_config.json
+                path: datum_gateway_config.json
+  volumeClaimTemplates:
+  - metadata:
+      name: datum-data
+    spec:
+      storageClassName: mayastor
+      accessModes: 
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 16Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: datum-gateway-lb
+spec:
+  selector:
+    app: datum-gateway
+  ports:
+    - name: api
+      port: 7152
+      targetPort: 7152
+    - name: sv1
+      port: 23334
+      targetPort: 23334
+  type: ClusterIP

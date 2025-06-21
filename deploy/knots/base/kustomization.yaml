@@ -1,0 +1,7 @@
+resources:
+  - knots-bitcoind.yaml
+
+configMapGenerator:
+  - name: knots-bitcoind-config
+    files:
+      - "bitcoin.conf"

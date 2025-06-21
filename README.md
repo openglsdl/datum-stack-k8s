@@ -1,11 +1,11 @@
 # datum-stack-k8s
 
-## Deploying datum and knots-bitcoind on MicroK8s
+## Deploying datum and knots-bitcoind via kubectl
 
 ### 1. Copy Manifests to Your MicroK8s Server
 Ensure the following files are available on your MicroK8s server:
-- `datum/datum-gateway-deployment.yaml`
-- `knots-bitcoind/knots-bitcoind-deployment.yaml`
+- `deployments/datum-gateway.yaml`
+- `deployments/knots-bitcoind.yaml`
 
 ### 2. Apply the Manifests
 From the project root, run:
