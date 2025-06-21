@@ -1,161 +1,81 @@
 # datum-stack-k8s
 
-## Deploying datum and knots-bitcoind via kubectl
+## Deploying datum and knots via kubectl
 
-### 1. Copy Manifests to Your MicroK8s Server
-Ensure the following files are available on your MicroK8s server:
-- `deployments/datum-gateway.yaml`
-- `deployments/knots-bitcoind.yaml`
+### 1. Configure your environment
+- Setup storage classes
+- Setup namespaces
+- etc.
 
-### 2. Apply the Manifests
-From the project root, run:
+### 2. Configure a kustomize overlay for your environment
+Note that an image will need to be set as a minimum customization.
+
+Datum example:
 ```bash
-microk8s kubectl apply -f knots-bitcoind/knots-bitcoind-deployment.yaml
-microk8s kubectl apply -f datum/datum-gateway-deployment.yaml
-```
-
-### 3. Verify the Deployments and Services
-Check that the pods are running:
-
-```bash
-microk8s kubectl get pods
-```
-
-Check that the services are created:
-
-```bash
-microk8s kubectl get services
-```
-
-### 4. (Optional) Expose Services Externally
-If you want to access the services from outside the cluster, you may need to edit the `Service` type from `ClusterIP` to `NodePort` or `LoadBalancer` in the manifests.
-
-### 5. (Optional) Provide Configuration
-If `datum_gateway` requires a custom config file, mount it as a Kubernetes ConfigMap or volume and update the deployment manifest accordingly.
-
-## Deploying to Google Cloud Platform (GCP) with GKE
-
-### 1. Create a GKE Cluster
-Follow the official GCP documentation to create your desired type of Kubernetes cluster:
-- https://cloud.google.com/kubernetes-engine/docs/how-to/creating-a-zonal-cluster
-- https://cloud.google.com/kubernetes-engine/docs/how-to/creating-a-regional-cluster
-
-Note that instructions below are shown as a simple zonal deployment example.
-
-### 2. Configure kubectl to Use Your GKE Cluster
-```bash
-gcloud container clusters get-credentials datum-cluster --zone us-central1-a
-```
-
-### 3. Apply the Manifests
-From the project root, run:
-```bash
-kubectl apply -f knots-bitcoind/knots-bitcoind-deployment.yaml
-kubectl apply -f datum/datum-gateway-deployment.yaml
-```
-
-### 4. Expose Services Externally
-Edit the `Service` manifests to use `type: LoadBalancer` for external access. Example:
-```yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: datum-gateway
 spec:
-  type: LoadBalancer
-  ports:
-    # ...
+  template:
+    spec:
+      containers:
+        - name: datum-gateway
+          image: retropex/datum-docker:latest
 ```
-Re-apply the service manifests if you make changes:
+
+Knots example:
 ```bash
-kubectl apply -f knots-bitcoind/knots-bitcoind-deployment.yaml
-kubectl apply -f datum/datum-gateway-deployment.yaml
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: knots-bitcoind
+spec:
+  replicas: 1
+  template:
+    spec:
+      containers:
+        - name: knots-bitcoind
+          image: retropex/docker-bitcoind:28.1
 ```
 
-### 5. Check External IPs
-After a few minutes, get the external IPs:
+Also be sure to configure a volume claim template that matches your environment.
+
+See `deploy/datum/overlays/dev` and `deploy/knots/overlays/dev` for a full overlay example.
+
+### 3. Setup your datum and knots config files
+- Place datum_gatway_config.json in `deploy/datum/base/datum_gatway_config.json`
+- Place bitcoin.conf in `deploy/knots/base/bitcoin.conf`
+
+### 4. Verify that your kustomize overlay generates valid configuration 
+```
+$ kubectl kustomize /path/to/your/overlay
+```
+
+Repeat this for both of your datum and knots overlays.
+
+### 5. Deploy
 ```bash
-kubectl get services
+$ kubectl apply -n YOUR_NAMESPACE -k /path/to/your/overlay
 ```
 
-### 6. (Optional) Use Google Secret Manager or ConfigMaps
-For sensitive configuration, use GCP Secret Manager or Kubernetes ConfigMaps/Secrets and mount them into your pods.
+Repeat this for both of your datum and knots overlays.
 
-### 7. Clean Up
-To delete the cluster and all resources:
+### 6. Verify the Deployments and Services
+Check the status of your StateFulSet:
+
 ```bash
-gcloud container clusters delete datum-cluster --zone us-central1-a
+$ kubectl get sts -n YOUR_NAMESPACE
 ```
 
-## Deploying to AWS with EKS
+Check the status of your pods:
 
-### 1. Create an EKS Cluster
-Follow the official AWS documentation or use eksctl:
-https://docs.aws.amazon.com/eks/latest/userguide/create-cluster.html
-
-Example with eksctl:
 ```bash
-eksctl create cluster --name datum-cluster --region us-west-2 --nodes 3
+$ kubectl get pods -n YOUR_NAMESPACE
 ```
 
-### 2. Configure kubectl for EKS
+Check that your services are created:
+
 ```bash
-aws eks --region us-west-2 update-kubeconfig --name datum-cluster
+$ kubectl get services -N YOUR_NAMESPACE
 ```
-
-### 3. Apply the Manifests
-```bash
-kubectl apply -f knots-bitcoind/knots-bitcoind-deployment.yaml
-kubectl apply -f datum/datum-gateway-deployment.yaml
-```
-
-### 4. Expose Services Externally
-Edit the `Service` manifests to use `type: LoadBalancer` for external access. Then re-apply the manifests.
-
-### 5. Get External IPs
-```bash
-kubectl get services
-```
-
-### 6. (Optional) Use AWS Secrets Manager or ConfigMaps
-For sensitive configuration, use AWS Secrets Manager or Kubernetes ConfigMaps/Secrets and mount them into your pods.
-
-### 7. Clean Up
-```bash
-eksctl delete cluster --name datum-cluster --region us-west-2
-```
-
-## Deploying to Azure with AKS
-
-### 1. Create an AKS Cluster
-Follow the official Azure documentation:
-https://docs.microsoft.com/en-us/azure/aks/kubernetes-walkthrough
-
-Example command:
-```bash
-az aks create --resource-group myResourceGroup --name datum-cluster --node-count 3 --generate-ssh-keys
-```
-
-### 2. Configure kubectl for AKS
-```bash
-az aks get-credentials --resource-group myResourceGroup --name datum-cluster
-```
-
-### 3. Apply the Manifests
-```bash
-kubectl apply -f knots-bitcoind/knots-bitcoind-deployment.yaml
-kubectl apply -f datum/datum-gateway-deployment.yaml
-```
-
-### 4. Expose Services Externally
-Edit the `Service` manifests to use `type: LoadBalancer` for external access. Then re-apply the manifests.
-
-### 5. Get External IPs
-```bash
-kubectl get services
-```
-
-### 6. (Optional) Use Azure Key Vault or ConfigMaps
-For sensitive configuration, use Azure Key Vault or Kubernetes ConfigMaps/Secrets and mount them into your pods.
-
-### 7. Clean Up
-```bash
-az aks delete --resource-group myResourceGroup --name datum-cluster --yes
-```
-
