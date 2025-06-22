@@ -9,8 +9,6 @@ spec:
       containers:
         - name: knots-bitcoind
           image: localhost:32000/retropex/docker-bitcoind:28.1
-          command: ["/bin/sh"]
-          args: ["-c", "sleep 3600"]
   volumeClaimTemplates:
   - metadata:
       name: bitcoind-data

@@ -8,7 +8,7 @@
 - etc.
 
 ### 2. Configure a kustomize overlay for your environment
-Note that an image will need to be set as a minimum customization.
+Note that a container image will need to be set as a minimum customization.
 
 Datum example:
 ```bash
@@ -41,13 +41,13 @@ spec:
 
 Also be sure to configure a volume claim template that matches your environment.
 
-See `deploy/datum/overlays/dev` and `deploy/knots/overlays/dev` for a full overlay example.
+See `deploy/datum/overlays/example-dev` and `deploy/knots/overlays/example-dev` for overlay examples.
 
 ### 3. Setup your datum and knots config files
 - Place datum_gatway_config.json in `deploy/datum/base/datum_gatway_config.json`
 - Place bitcoin.conf in `deploy/knots/base/bitcoin.conf`
 
-### 4. Verify that your kustomize overlay generates valid configuration 
+### 4. Verify that your kustomize overlay generates valid configuration
 ```
 $ kubectl kustomize /path/to/your/overlay
 ```
@@ -55,13 +55,16 @@ $ kubectl kustomize /path/to/your/overlay
 Repeat this for both of your datum and knots overlays.
 
 ### 5. Deploy
+
 ```bash
-$ kubectl apply -n YOUR_NAMESPACE -k /path/to/your/overlay
+$ kubectl create namespace YOUR_NAMESPACE
+$ kubectl apply -n YOUR_NAMESPACE -k /path/to/your/knots/overlay
+$ kubectl apply -n YOUR_NAMESPACE -k /path/to/your/datum/overlay
 ```
 
-Repeat this for both of your datum and knots overlays.
+Depending on your environment, it may take knots hours to days to sync with the network.
 
-### 6. Verify the Deployments and Services
+### 6. Verify the deployment and services
 Check the status of your StateFulSet:
 
 ```bash
@@ -79,3 +82,7 @@ Check that your services are created:
 ```bash
 $ kubectl get services -N YOUR_NAMESPACE
 ```
+
+### 7. Connect miners to datum
+
+Once knots has synchronized and datum is connected via RPC, you can point miners to the sv1 port of datum-gateway-lb using the IP of any node in the cluster.

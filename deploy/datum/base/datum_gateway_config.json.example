@@ -1,12 +1,11 @@
 {
   "bitcoind": {
-    "rpcurl": "",
-    "rpcuser": "",
-    "rpcpassword": "",
+    "rpcurl": "YOUR_BITCOIN_NODE_ADDRESS",
+    "rpcuser": "USERNAME",
+    "rpcpassword": "PASSWORD",
     "work_update_seconds": 40
   },
   "stratum": {
-    "listen_addr": "0.0.0.0",
     "listen_port": 23334,
     "max_clients_per_thread": 2000,
     "max_threads": 10,
@@ -14,7 +13,7 @@
     "vardiff_min": 16384
   },
   "mining": {
-    "pool_address": "",
+    "pool_address": "YOUR_WALLET_ADDRESS",
     "coinbase_tag_primary": "DATUM",
     "coinbase_tag_secondary": ""
   },

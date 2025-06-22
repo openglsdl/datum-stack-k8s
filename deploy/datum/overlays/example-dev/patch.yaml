@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: datum-gateway
+spec:
+  replicas: 2
+  template:
+    spec:
+      initContainers:
+        - name: copy-config
+          image: localhost:32000/retropex/datum-docker:latest
+          resources:
+            requests:
+              memory: "64Mi"
+              cpu: "100m"
+            limits:
+              memory: "128Mi"
+              cpu: "200m"
+          command: 
+            - sh
+            - -c
+            - |
+              cp /app/datum_gateway /mnt/app/datum_gateway
+              chown -R 1000:1000 /mnt/app
+          volumeMounts:
+            - name: datum-data
+              mountPath: /mnt/app
+          securityContext:
+            runAsNonRoot: false
+            runAsUser: 0
+            allowPrivilegeEscalation: false
+      containers:
+        - name: datum-gateway
+          image: localhost:32000/retropex/datum-docker:latest
+  volumeClaimTemplates:
+  - metadata:
+      name: datum-data
+    spec:
+      storageClassName: mayastor
+      accessModes: 
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 16Gi
