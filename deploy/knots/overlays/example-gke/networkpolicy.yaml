@@ -1,0 +1,13 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: knots-bitcoind-egress
+spec:
+  podSelector:
+    matchLabels:
+      app: knots-bitcoind
+  policyTypes:
+  - Egress
+  egress:
+  # Allow all egress for Bitcoin node (GKE Autopilot requirement)
+  - {}

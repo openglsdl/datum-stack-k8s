@@ -25,6 +25,8 @@ spec:
       containers:
         - name: datum-gateway
           image: DEFAULT_IMAGE_PLACEHOLDER  # Create a kustomization to replace this with your image
+          command: ["/app/datum_gateway"]
+          args: ["--config", "/app/datum_gateway_config.json"]
           resources:
             requests:
               memory: "4G"
@@ -90,12 +92,10 @@ spec:
     - name: api
       port: 7152
       targetPort: 7152
-      nodePort: 30152  # External port for API
     - name: sv1
       port: 23334
       targetPort: 23334
-      nodePort: 30334  # External port for Stratum
-  type: NodePort
+  type: LoadBalancer
 ---
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy

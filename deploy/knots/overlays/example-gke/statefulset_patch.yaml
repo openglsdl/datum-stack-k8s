@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: knots-bitcoind
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: knots-bitcoind
+    spec:
+      # Uncomment to select specific performance optimized nodes for these pods.
+      # See: https://cloud.google.com/kubernetes-engine/docs/how-to/performance-pods#supported-machine-series
+      nodeSelector:
+        cloud.google.com/machine-family: c3d
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: knots-bitcoind
+          image: us-east1-docker.pkg.dev/datum-stack-k8s-test/datum-stack-k8s-repo/docker-bitcoind:28.1
+          resources:
+            requests:
+              memory: "16G"
+              cpu: "4000m"
+            limits:
+              memory: "16G"
+              cpu: "4000m"
+          securityContext:
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+              add:
+                - NET_BIND_SERVICE
+            seccompProfile:
+              type: RuntimeDefault
+  volumeClaimTemplates:
+  - metadata:
+      name: bitcoind-data
+    spec:
+      storageClassName: premium-rwo
+      accessModes: 
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 900Gi

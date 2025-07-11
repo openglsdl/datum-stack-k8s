@@ -5,4 +5,4 @@ patches:
 - target:
     kind: StatefulSet
     name: knots-bitcoind
-  path: patch.yaml
+  path: statefulset_patch.yaml

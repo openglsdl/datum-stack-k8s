@@ -1,8 +1,9 @@
 resources:
   - ../../base
+  - networkpolicy.yaml
 
 patches:
 - target:
     kind: StatefulSet
-    name: datum-gateway
+    name: knots-bitcoind
   path: statefulset_patch.yaml
